@@ -1,0 +1,318 @@
+// const { createElement } = require("react");
+
+// document.getElementById('managenotes').addEventListener('click', async () => {
+//     let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+//     chrome.sidePanel.open({ tabId: tab.id });
+// });
+
+// document.getElementById('addnotes').addEventListener('click', async () => {
+//     const note = document.createElement("n");
+//     document.body.appendChild(note);
+//     create();
+
+// });
+// getCurrentTab();
+
+const themes = {
+    default: {
+        primaryColor: "#000000",
+        secondaryColor: "#898088",    
+        thirdColor: "#ffffff",    
+        textColor: "#000000"
+    },    
+    purple: {
+        primaryColor: "#390a32",
+        secondaryColor: "#b96bb4",    
+        thirdColor: "#ffffff",    
+        textColor: "#390a32"
+    },    
+    yellow: {
+        primaryColor: "#52561e",
+        secondaryColor: "#eeff00",    
+        thirdColor: "#ffffff",    
+        textColor: "#000000"
+    },    
+    blue: {
+        primaryColor: "#1f1257",
+        secondaryColor: "#836bec",    
+        thirdColor: "#ffffff",    
+        textColor: "#1f1257"
+    },    
+    green: {
+        primaryColor: "#0e3b10",
+        secondaryColor: "#71ae74",    
+        thirdColor: "#ffffff",    
+        textColor: "#0e3b10"
+    },
+    red: {
+        primaryColor: "#3b0e0e",
+        secondaryColor: "#c04747",    
+        thirdColor: "#ffffff",    
+        textColor: "#3b0e0e"
+    }
+}
+
+const styles = 
+`
+    :root {
+        --primary-color: #000000;
+        --secondary-color: #898088; 
+        --third-color: #ffffff;   
+        --text-color: #000000;
+    }
+    .themepickergrid .themebutton {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;        
+            border: none; 
+            cursor: pointer;
+            outline: none;
+            transition: opacity 0.2s;  
+    }   
+    .themebutton:hover { opacity: 0.7; }
+    .themebutton:active { opacity: 0.5; }
+
+    .extensionnotebutton {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 15px;
+        width: 15px;
+        /* font-weight: bold; */
+        background-color: transparent; 
+        color: var(--secondary-color);
+        border: none;
+        border-radius: 50%;
+        font-size: 13px;
+        z-index: 1001;
+        cursor: pointer;
+        outline: 2px solid var(--secondary-color);
+        transition: opacity 0.2s, transform 0.2s , outline 0.2s;
+
+        display: flex;             
+        justify-content: center;    
+        align-items: center;        
+    }
+    .closenote {
+        right: 10px;
+    }
+    .minimizenote{
+        left: 10px;
+    }    
+    .pinnote{
+        left: 40px;
+    }
+    .themepicker{
+        left: 65px;
+    }
+    .themepickergrid {
+        display: grid;
+        font-size: 0px;
+        grid-template-columns: repeat(6, 1fr);
+        height: 100%;
+    }
+    .extensionnotebutton:hover { opacity: 0.7; }
+    .extensionnotebutton:active { opacity: 0.5; transform: translateY(-50%) rotate(90deg); outline: 2px dotted var(--third-color);}
+    /* .extensionnotebutton:focus { z-index: 10001;} */
+`;
+const styleSheet = document.createElement("style");
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);
+
+headerui = `
+    <button class="extensionnotebutton closenote">×</button>
+    <button class="extensionnotebutton minimizenote">=</button>
+    <button class="extensionnotebutton pinnote">P</button>
+    <button class="extensionnotebutton themepicker">T</button>
+`;
+
+pickcerui= `
+    <div class = themepickergrid>
+        <button class="themebutton default"></button>
+        <button class="themebutton purple"></button>
+        <button class="themebutton yellow"></button>
+        <button class="themebutton blue"></button>
+        <button class="themebutton green"></button>
+        <button class="themebutton red"></button>
+    </div>
+`;
+
+let maxz = 1000;
+
+function createnote (){
+
+    const container = document.createElement("div");
+    container.style.position = "fixed"; 
+    container.style.top = "20vh";
+    container.style.left = "100px";
+    container.style.width = "200px";
+    container.style.height = "200px";
+    container.style.backgroundColor = "var(--primary-color)";
+    container.style.color = "var(--text-color)";
+    container.style.zIndex = "1000";
+    container.style.resize = "both";
+    container.style.overflow = "hidden";
+    container.style.minHeight = "130px"; 
+    container.style.minWidth = "200px";
+    container.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.8)"; 
+    container.style.display = "flex"; 
+    container.style.flexDirection = "column";
+    container.id =  Date.now();
+
+    const header = document.createElement("div");
+    header.style.backgroundColor = "var(--primary-color)";
+    header.style.position = "relative";
+    header.style.cursor = "move";
+    header.style.height = "30px";
+    header.style.userSelect = "none";
+    header.style.outline = "none";
+    header.style.border = "none";
+    header.style.overflow = "hidden";
+    header.style.flex = "0 0 30px"; 
+    header.style.display = "flex";
+    header.style.flexDirection = "row"; 
+    header.innerHTML = headerui;
+
+    const picker = document.createElement("div");
+    picker.style.position = "relative";
+    picker.style.height = "30px";
+    picker.style.display = "none";     
+    picker.style.backgroundColor = "#a3a3a3";
+    picker.style.flex = "0 0 30px";
+    picker.innerHTML = pickcerui;
+    Object.entries(themes).forEach(([name, theme]) => {
+        const btn = picker.querySelector(`.themebutton.${name}`);
+        if (!btn) return;
+
+        btn.style.backgroundColor = theme.secondaryColor;
+    });
+
+    const textarea = document.createElement("textarea");
+    textarea.style.width = "100%";
+    textarea.style.backgroundColor = "var(--secondary-color)";
+    textarea.style.color = "var(--text-color)";
+    textarea.style.border = "none";
+    textarea.style.resize = "none";
+    textarea.style.outline = "none";
+    textarea.value = "THIS IS A NOTE!!!";
+    textarea.style.overflow = "auto"; 
+    textarea.style.flex = "1"; 
+    textarea.style.fontFamily = "'Courier New', Courier, monospace";
+
+    const closeBtn = header.querySelector(".closenote");
+    if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+            container.remove();
+    });}
+
+    const minimizeBtn = header.querySelector(".minimizenote");
+    if (minimizeBtn) {
+    minimizeBtn.addEventListener("click", () => {
+        if (textarea.style.display === "none") {
+            textarea.style.display = "block";
+            container.style.height = "200px";
+            container.style.minHeight = "130px";
+            container.style.resize = "both";
+        }else{
+        textarea.style.display = "none";
+            container.style.minHeight = "30px";
+            container.style.height = "30px";
+            container.style.resize = "none";
+        }
+    });}
+
+    const pinBtn = header.querySelector(".pinnote");
+    let isPinned = false;
+    pinBtn.addEventListener("click", () => {
+        isPinned = !isPinned;
+        if (isPinned) {                
+            pinBtn.style.backgroundColor = "var(--secondary-color)";
+            pinBtn.style.color = "var(--primary-color)";
+            header.style.cursor = "not-allowed"; 
+        } 
+        else {    
+            pinBtn.style.backgroundColor = "transparent";
+            pinBtn.style.color = "var(--secondary-color)";
+            header.style.cursor = "move";
+        }
+    });
+
+    const pickerBtn = header.querySelector(".themepicker");
+    if (pickerBtn) {
+        pickerBtn.addEventListener("click", () => {
+            picker.style.display = picker.style.display === "none" ? "block" : "none";
+    });}
+
+    function applyTheme(themeName) {
+        const theme = themes[themeName];
+        if (!theme) 
+            return;
+        const root = document.documentElement;
+        root.style.setProperty("--primary-color", theme.primaryColor);
+        root.style.setProperty("--secondary-color", theme.secondaryColor);
+        root.style.setProperty("--third-color", theme.thirdColor);
+        root.style.setProperty("--text-color", theme.textColor);
+    }
+
+    picker.querySelectorAll(".themebutton").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const themeName = [...btn.classList].find(c => themes[c]);
+            applyTheme(themeName);
+        });
+    });
+
+    let offset = { x: 0, y: 0 };
+    function onMouseMove(e) {
+        container.style.left = (e.clientX - offset.x) + 'px';
+        container.style.top = (e.clientY - offset.y) + 'px';
+    }
+
+    function onMouseUp() {
+        if (isPinned) {
+            header.style.cursor = 'not-allowed'; 
+        } else {
+            header.style.cursor = 'move';
+        }                
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+            
+    }
+
+    header.addEventListener('mousedown', (e) => {
+        if (isPinned) return;
+        if (e.target.classList.contains('extensionextensionnotebutton')) return; 
+            
+        header.style.cursor = 'grabbing';
+        offset.x = e.clientX - container.getBoundingClientRect().left;
+        offset.y = e.clientY - container.getBoundingClientRect().top;
+            
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+
+    bringToFront = (note) => {
+        note.style.zIndex = maxz++;
+    };
+
+    container.addEventListener("mousedown", () => {
+        bringToFront(container);
+    });
+
+
+    container.appendChild(header);
+    container.appendChild(picker);
+    container.appendChild(textarea);
+    document.body.appendChild(container);
+    return true;
+};
+
+
+const glow = document.querySelector('.glow');
+
+if (glow) {
+  document.addEventListener('mousemove', e => {
+    glow.style.left = e.clientX + 'px';
+    glow.style.top = e.clientY + 'px';
+  });
+}
+
